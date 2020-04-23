@@ -23,17 +23,17 @@ data_dir = 'Cat_Dog_data' #DOWNLOAD DATA FOR THIS
 
 # TODO: Define transforms for the training data and testing data
 train_transforms = transforms.Compose([transforms.RandomRotation(30),
-                                       transforms.RandomResizedCrop(224),
-                                       transforms.RandomHorizontalFlip(),
-                                       transforms.ToTensor(),
-                                       transforms.Normalize([0.485, 0.456, 0.406],
-                                                            [0.229, 0.224, 0.225])])
+									   transforms.RandomResizedCrop(224),
+									   transforms.RandomHorizontalFlip(),
+									   transforms.ToTensor(),
+									   transforms.Normalize([0.485, 0.456, 0.406],
+															[0.229, 0.224, 0.225])])
 
 test_transforms = transforms.Compose([transforms.Resize(255),
-                                      transforms.CenterCrop(224),
-                                      transforms.ToTensor(),
-                                      transforms.Normalize([0.485, 0.456, 0.406],
-                                                           [0.229, 0.224, 0.225])])
+									  transforms.CenterCrop(224),
+									  transforms.ToTensor(),
+									  transforms.Normalize([0.485, 0.456, 0.406],
+														   [0.229, 0.224, 0.225])])
 
 # Pass transforms in here, then run the next cell to see how the transforms look
 train_data = datasets.ImageFolder(data_dir + '/train', transform=train_transforms)
@@ -59,18 +59,18 @@ print(model)
 
 # Freeze parameters so we don't backprop through them
 for param in model.parameters():
-    param.requires_grad = False
+	param.requires_grad = False
 
 from collections import OrderedDict
 classifier = nn.Sequential(OrderedDict([
-                          ('fc1', nn.Linear(1024, 512)),
-                          ('relu1', nn.ReLU()),
-                          ('fc2', nn.Linear(512,256)),
-                          ('relu2', nn.ReLU()),
-                          ('fc3', nn.Linear(256, 2)),
-                          ('output', nn.LogSoftmax(dim=1))
-                          ]))
-    
+						  ('fc1', nn.Linear(1024, 512)),
+						  ('relu1', nn.ReLU()),
+						  ('fc2', nn.Linear(512,256)),
+						  ('relu2', nn.ReLU()),
+						  ('fc3', nn.Linear(256, 2)),
+						  ('output', nn.LogSoftmax(dim=1))
+						  ]))
+	
 model.classifier = classifier
 
 
@@ -91,28 +91,28 @@ import time
 
 for device in ['cpu', 'cuda']:
 
-    criterion = nn.NLLLoss()
-    # Only train the classifier parameters, feature parameters are frozen
-    optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
+	criterion = nn.NLLLoss()
+	# Only train the classifier parameters, feature parameters are frozen
+	optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
 
-    model.to(device)
+	model.to(device)
 
-    for ii, (inputs, labels) in enumerate(trainloader):
+	for ii, (inputs, labels) in enumerate(trainloader):
 
-        # Move input and label tensors to the GPU
-        inputs, labels = inputs.to(device), labels.to(device)
+		# Move input and label tensors to the GPU
+		inputs, labels = inputs.to(device), labels.to(device)
 
-        start = time.time()
+		start = time.time()
 
-        outputs = model.forward(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+		outputs = model.forward(inputs)
+		loss = criterion(outputs, labels)
+		loss.backward()
+		optimizer.step()
 
-        if ii==3:
-            break
-        
-    print(f"Device = {device}; Time per batch: {(time.time() - start)/3:.3f} seconds")
+		if ii==3:
+			break
+		
+	print(f"Device = {device}; Time per batch: {(time.time() - start)/3:.3f} seconds")
 
 
 # You can write device agnostic code which will automatically use CUDA if it's enabled like so:
@@ -142,16 +142,16 @@ model = models.densenet121(pretrained=True)
 
 # Freeze parameters so we don't backprop through them
 for param in model.parameters():
-    param.requires_grad = False
-    
+	param.requires_grad = False
+	
 model.classifier = nn.Sequential(nn.Linear(1024, 512),
-                                 nn.ReLU(),
-                                 nn.Dropout(0.2),
-                                 nn.Linear(512, 256),
-                                 nn.ReLU(),
-                                 nn.Dropout(0.1),
-                                 nn.Linear(256, 2),
-                                 nn.LogSoftmax(dim=1))
+								 nn.ReLU(),
+								 nn.Dropout(0.2),
+								 nn.Linear(512, 256),
+								 nn.ReLU(),
+								 nn.Dropout(0.1),
+								 nn.Linear(256, 2),
+								 nn.LogSoftmax(dim=1))
 
 criterion = nn.NLLLoss()
 
@@ -173,50 +173,50 @@ steps = 0
 running_loss = 0
 print_every = 5
 for epoch in range(epochs):
-    for inputs, labels in trainloader:
-        steps += 1
-        # Move input and label tensors to the default device
-        inputs, labels = inputs.to(device), labels.to(device)
-        
-        optimizer.zero_grad()
-        
-        logps = model.forward(inputs)
-        loss = criterion(logps, labels)
-        loss.backward()
-        optimizer.step()
+	for inputs, labels in trainloader:
+		steps += 1
+		# Move input and label tensors to the default device
+		inputs, labels = inputs.to(device), labels.to(device)
+		
+		optimizer.zero_grad()
+		
+		logps = model.forward(inputs)
+		loss = criterion(logps, labels)
+		loss.backward()
+		optimizer.step()
 
-        running_loss += loss.item()
-        
-        if steps % print_every == 0:
-            test_loss = 0
-            accuracy = 0
-            model.eval()
-            with torch.no_grad():
-                for inputs, labels in testloader:
-                    inputs, labels = inputs.to(device), labels.to(device)
-                    logps = model.forward(inputs)
-                    batch_loss = criterion(logps, labels)
-                    
-                    test_loss += batch_loss.item()
-                    
-                    # Calculate accuracy
-                    ps = torch.exp(logps)
-                    top_p, top_class = ps.topk(1, dim=1)
-                    equals = top_class == labels.view(*top_class.shape)
-                    accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
-            
-            traininglosses.append(running_loss/print_every)
-            testinglosses.append(test_loss/len(testloader))
-            testaccuracy.append(accuracy/len(testloader))
-            totalsteps.append(steps)
-            print(f"Device {device}.."
-                  f"Epoch {epoch+1}/{epochs}.. "
-                  f"Step {steps}.. "
-                  f"Train loss: {running_loss/print_every:.3f}.. "
-                  f"Test loss: {test_loss/len(testloader):.3f}.. "
-                  f"Test accuracy: {accuracy/len(testloader):.3f}")
-            running_loss = 0
-            model.train()
+		running_loss += loss.item()
+		
+		if steps % print_every == 0:
+			test_loss = 0
+			accuracy = 0
+			model.eval()
+			with torch.no_grad():
+				for inputs, labels in testloader:
+					inputs, labels = inputs.to(device), labels.to(device)
+					logps = model.forward(inputs)
+					batch_loss = criterion(logps, labels)
+					
+					test_loss += batch_loss.item()
+					
+					# Calculate accuracy
+					ps = torch.exp(logps)
+					top_p, top_class = ps.topk(1, dim=1)
+					equals = top_class == labels.view(*top_class.shape)
+					accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
+			
+			traininglosses.append(running_loss/print_every)
+			testinglosses.append(test_loss/len(testloader))
+			testaccuracy.append(accuracy/len(testloader))
+			totalsteps.append(steps)
+			print(f"Device {device}.."
+				  f"Epoch {epoch+1}/{epochs}.. "
+				  f"Step {steps}.. "
+				  f"Train loss: {running_loss/print_every:.3f}.. "
+				  f"Test loss: {test_loss/len(testloader):.3f}.. "
+				  f"Test accuracy: {accuracy/len(testloader):.3f}")
+			running_loss = 0
+			model.train()
 
 
 # In[11]:
@@ -235,8 +235,8 @@ plt.show()
 
 
 checkpoint = {
-    'parameters' : model.parameters,
-    'state_dict' : model.state_dict()
+	'parameters' : model.parameters,
+	'state_dict' : model.state_dict()
 }
 
 
