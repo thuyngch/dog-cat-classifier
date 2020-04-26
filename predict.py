@@ -3,10 +3,9 @@ from utils.helpers import *
 import warnings
 from PIL import Image
 from torchvision import transforms
-from torchsummary import summary
 from glob import glob
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 @torch.no_grad()
 def image_transform(imagepath):
@@ -20,7 +19,7 @@ def image_transform(imagepath):
 	return imagetensor
 
 @torch.no_grad()
-def predict(model, imagepath, device='cuda'):
+def predict(model, imagepath, device='cpu'):
 	image = image_transform(imagepath)
 	image1 = image[None,:,:,:].to(device)
 	ps = torch.exp(model(image1))
@@ -37,8 +36,8 @@ if __name__ == '__main__':
 
 	# Build model
 	model = load_model(model_path)
-	model.eval().cuda()
-	summary(model, input_size=(3,244,244))
+	model.eval()
+	# model.eval().cuda()
 
 	# Infer images
 	image_files = sorted(glob(os.path.join(img_dir, "*.*")))
